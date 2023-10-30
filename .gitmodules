@@ -1,0 +1,6 @@
+[submodule "build/libs"]
+	path = libs/ColorConsole
+	url = https://github.com/Iprime111/ColorConsole.git
+[submodule "libs/CustomAssert"]
+	path = libs/CustomAssert
+	url = https://github.com/Iprime111/CustomAssert.git
