@@ -14,6 +14,8 @@ namespace LinkedList {
         PREV_NULL_POINTER = 1 << 1,
         NEXT_NULL_POINTER = 1 << 2,
         DATA_NULL_POINTER = 1 << 3,
+        FREE_LIST_ERROR   = 1 << 4,
+        WRONG_INDEX       = 1 << 5,
     };
 
     struct List {
@@ -27,12 +29,14 @@ namespace LinkedList {
         size_t head;
         size_t tail;
 
+        size_t freeElem;
+
         ListErrorCode errors;
     };
 
     ListErrorCode InitList    (List *list, size_t capacity = DEFAULT_CAPACITY);
     ListErrorCode DestroyList (List *list);
-    ListErrorCode InsertAfter (List *list, size_t insertIndex, size_t *newIndex);
+    ListErrorCode InsertAfter (List *list, size_t insertIndex, size_t *newIndex, elem_t element);
     ListErrorCode DeleteValue (List *list, size_t deleteIndex);
     ListErrorCode VerifyList  (List *list);
     ListErrorCode DumpList    (List *list);

@@ -4,6 +4,8 @@ include_directories (${CMAKE_CURRENT_SOURCE_DIR}/headers)
 
 add_executable (${PROJECT_NAME})
 
+add_compile_definitions (_SHOW_STACK_TRACE)
+
 add_subdirectory (libs)
 add_subdirectory (src)
 
