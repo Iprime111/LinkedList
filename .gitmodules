@@ -4,3 +4,6 @@
 [submodule "libs/CustomAssert"]
 	path = libs/CustomAssert
 	url = https://github.com/Iprime111/CustomAssert.git
+[submodule "libs/Buffer"]
+	path = libs/Buffer
+	url = https://github.com/Iprime111/Buffer.git
