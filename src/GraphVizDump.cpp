@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "GraphVizDump.h"
 #include "Buffer.h"
@@ -15,6 +16,7 @@ namespace LinkedList {
     static ListErrorCode DumpNode            (List *list, ssize_t nodeIndex, Buffer <char> *graphvizBuffer);
     static ListErrorCode DumpNodeConnections (List *list, ssize_t nodeIndex, Buffer <char> *graphvizBuffer);
     static ListErrorCode WriteDumpHeader     (List *list, Buffer <char> *graphvizBuffer);
+    static ListErrorCode WriteCallData       (List *list, CallingFileData *callData, Buffer <char> *graphvizBuffer);
     static char         *GetLogFilename      (char *logFolder);
 
     #define CheckWriteErrors(buffer, data)                                                          \
@@ -25,7 +27,11 @@ namespace LinkedList {
                     }                                                                               \
                 } while (0)
 
-    ListErrorCode DumpList (List *list, char *logFolder) {
+    #define WriteIndexToDump(dumpBuffer, indexBuffer, index)            \
+                snprintf (indexBuffer, MAX_INDEX_LENGTH, "%ld", index); \
+                CheckWriteErrors (dumpBuffer, indexBuffer)
+
+    ListErrorCode DumpList (List *list, char *logFolder, CallingFileData callData) {
         PushLog (3);
 
         ListErrorCode verificationResult = VerifyList (list);
@@ -40,6 +46,7 @@ namespace LinkedList {
         }
 
         WriteDumpHeader (list, &graphvizBuffer);
+        WriteCallData (list, &callData, &graphvizBuffer);
 
         for (ssize_t nodeIndex = 0; nodeIndex < list->capacity; nodeIndex++) {
             DumpNode (list, nodeIndex, &graphvizBuffer);
@@ -76,10 +83,9 @@ namespace LinkedList {
         custom_assert (graphvizBuffer, pointer_is_null, GRAPHVIZ_BUFFER_ERROR);
 
         char indexBuffer [MAX_INDEX_LENGTH] = "";
-        snprintf (indexBuffer, MAX_INDEX_LENGTH, "%ld", nodeIndex);
 
         CheckWriteErrors (graphvizBuffer, "\t");
-        CheckWriteErrors (graphvizBuffer, indexBuffer);
+        WriteIndexToDump (graphvizBuffer, indexBuffer, nodeIndex);
         CheckWriteErrors (graphvizBuffer, " [style=\"filled, rounded\" fillcolor=\"" DUMP_NODE_COLOR "\" shape=\"record\" color=\"");
 
         if (list->prev [nodeIndex] < 0) {
@@ -113,15 +119,9 @@ namespace LinkedList {
         char indexBuffer [MAX_INDEX_LENGTH] = "";
 
         CheckWriteErrors (graphvizBuffer, "\t");
-
-        snprintf (indexBuffer, MAX_INDEX_LENGTH, "%ld", nodeIndex);
-
-        CheckWriteErrors (graphvizBuffer, indexBuffer);
+        WriteIndexToDump (graphvizBuffer, indexBuffer, nodeIndex);
         CheckWriteErrors (graphvizBuffer, " -> ");
-
-        snprintf (indexBuffer, MAX_INDEX_LENGTH, "%ld", list->next [nodeIndex]);
-
-        CheckWriteErrors (graphvizBuffer, indexBuffer);
+        WriteIndexToDump (graphvizBuffer, indexBuffer, list->next [nodeIndex]);
         CheckWriteErrors (graphvizBuffer, " [color=\"");
 
         if (list->next [nodeIndex] == 0) {
@@ -139,15 +139,9 @@ namespace LinkedList {
         }
 
         CheckWriteErrors (graphvizBuffer, "\t");
-
-        snprintf (indexBuffer, MAX_INDEX_LENGTH, "%ld", nodeIndex);
-
-        CheckWriteErrors (graphvizBuffer, indexBuffer);
+        WriteIndexToDump (graphvizBuffer, indexBuffer, nodeIndex);
         CheckWriteErrors (graphvizBuffer, " -> ");
-
-        snprintf (indexBuffer, MAX_INDEX_LENGTH, "%ld", list->prev [nodeIndex]);
-
-        CheckWriteErrors (graphvizBuffer, indexBuffer);
+        WriteIndexToDump (graphvizBuffer, indexBuffer, list->prev [nodeIndex]);
         CheckWriteErrors (graphvizBuffer, " [color=\"" DUMP_PREV_CONNECTION_COLOR "\"];\n");
 
         RETURN NO_LIST_ERRORS;
@@ -163,37 +157,58 @@ namespace LinkedList {
         char indexBuffer [MAX_INDEX_LENGTH] = "";
 
         for (ssize_t nodeIndex = 0; nodeIndex < list->capacity - 1; nodeIndex++) {
-            snprintf (indexBuffer, MAX_INDEX_LENGTH, "%ld", nodeIndex);
-            CheckWriteErrors (graphvizBuffer, indexBuffer);
+            WriteIndexToDump (graphvizBuffer, indexBuffer, nodeIndex);
 
             CheckWriteErrors (graphvizBuffer, " -> ");
         }
 
-        snprintf (indexBuffer, MAX_INDEX_LENGTH, "%ld", list->capacity - 1);
-        CheckWriteErrors (graphvizBuffer, indexBuffer);
-
+        WriteIndexToDump (graphvizBuffer, indexBuffer, list->capacity - 1);
         CheckWriteErrors (graphvizBuffer, " [weight=999999 color=\"" DUMP_BACKGROUND_COLOR "\"];\n");
 
         CheckWriteErrors (graphvizBuffer, "\tHeader [style=\"filled, rounded\" fillcolor=\"" DUMP_NODE_COLOR "\" shape=\"record\" color=\"" DUMP_HEADER_NODE_COLOR "\" label=\"");
 
         char nodeDataBuffer [MAX_NODE_DATA_LENGTH] = "";
 
-        snprintf (nodeDataBuffer, MAX_NODE_DATA_LENGTH, "<head> head: 0 | <tail> tail: %ld | <free> free: %ld \"];\n",
-                    list->tail, list->freeElem);
+        snprintf (nodeDataBuffer, MAX_NODE_DATA_LENGTH, "<head> head: %ld | <tail> tail: %ld | <free> free: %ld \"];\n",
+                    list->next [0], list->prev [0], list->freeElem);
 
         CheckWriteErrors (graphvizBuffer, nodeDataBuffer);
 
-        CheckWriteErrors (graphvizBuffer, "\tHeader:head -> 0 [color=\"" DUMP_HEADER_NODE_COLOR "\"weight=2];\n");
+        const char *HeaderFieldAttributes = " [color=\"" DUMP_HEADER_NODE_COLOR "\"weight=2];\n";
+
+        CheckWriteErrors (graphvizBuffer, "\tHeader:head -> ");
+        WriteIndexToDump (graphvizBuffer, indexBuffer, list->next [0]);
+        CheckWriteErrors (graphvizBuffer, HeaderFieldAttributes);
 
         CheckWriteErrors (graphvizBuffer, "\tHeader:tail -> ");
-        snprintf (indexBuffer, MAX_INDEX_LENGTH, "%ld", list->tail);
-        CheckWriteErrors (graphvizBuffer, indexBuffer);
-        CheckWriteErrors (graphvizBuffer, " [color=\"" DUMP_HEADER_NODE_COLOR "\" weight=2];\n");
+        WriteIndexToDump (graphvizBuffer, indexBuffer, list->prev [0]);
+        CheckWriteErrors (graphvizBuffer, HeaderFieldAttributes);
 
         CheckWriteErrors (graphvizBuffer, "\tHeader:free -> ");
-        snprintf (indexBuffer, MAX_INDEX_LENGTH, "%ld", list->freeElem);
-        CheckWriteErrors (graphvizBuffer, indexBuffer);
-        CheckWriteErrors (graphvizBuffer, " [color=\"" DUMP_HEADER_NODE_COLOR "\" weight=2];\n\n");
+        WriteIndexToDump (graphvizBuffer, indexBuffer, list->freeElem);
+        CheckWriteErrors (graphvizBuffer, HeaderFieldAttributes);
+
+        CheckWriteErrors (graphvizBuffer, "\n");
+
+        RETURN NO_LIST_ERRORS;
+    }
+
+    static ListErrorCode WriteCallData (List *list, CallingFileData *callData, Buffer <char> *graphvizBuffer) {
+        PushLog (4);
+
+        char callDataBuffer [FILENAME_MAX] = "";
+
+        CheckWriteErrors (graphvizBuffer, "\tCreation [shape=rectangle label=\"Was created in ");
+        snprintf (callDataBuffer, FILENAME_MAX, "%s (%s:%d)",
+                    list->creationData.function, list->creationData.file, list->creationData.line);
+        CheckWriteErrors (graphvizBuffer, callDataBuffer);
+        CheckWriteErrors (graphvizBuffer, "\"]\n");
+
+        CheckWriteErrors (graphvizBuffer, "\tCall [shape=rectangle label=\"Was called in ");
+        snprintf (callDataBuffer, FILENAME_MAX, "%s (%s:%d)",
+                    callData->function, callData->file, callData->line);
+        CheckWriteErrors (graphvizBuffer, callDataBuffer);
+        CheckWriteErrors (graphvizBuffer, "\"]\n");
 
         RETURN NO_LIST_ERRORS;
     }
@@ -210,8 +225,14 @@ namespace LinkedList {
             RETURN NULL;
         }
 
-        snprintf (filename, FILENAME_MAX, "%s/%.2d-%.2d-%.4d_%.2d:%.2d:%.2d.dot", logFolder, localTime.tm_mday, localTime.tm_mon,
-                    localTime.tm_year + 1900, localTime.tm_hour, localTime.tm_min, localTime.tm_sec);
+        int versionCounter = 0;
+
+        do {
+            snprintf (filename, FILENAME_MAX, "%s/%.2d-%.2d-%.4d_%.2d:%.2d:%.2d(%d).dot", logFolder, localTime.tm_mday, localTime.tm_mon,
+                        localTime.tm_year + 1900, localTime.tm_hour, localTime.tm_min, localTime.tm_sec, versionCounter);
+
+            versionCounter++;
+        }  while (!access (filename, F_OK));
 
         RETURN filename;
     }

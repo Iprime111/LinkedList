@@ -1,6 +1,8 @@
 #include <cmath>
+#include <cstdlib>
 #include <cstring>
 #include <stdlib.h>
+#include <sys/types.h>
 
 #include "LinkedList.h"
 #include "GraphVizDump.h"
@@ -13,30 +15,31 @@
     #define ON_DEBUG(...)
 #endif
 
-#define Verification(list)                              \
+#define Verification(list, callData)                    \
     do {                                                \
         ListErrorCode errorCode_ = VerifyList (list);   \
         if (errorCode_ != NO_LIST_ERRORS) {             \
-            ON_DEBUG (DumpList (list, "."));            \
+            ON_DEBUG (DumpList (list, ".", callData));  \
             RETURN errorCode_;                          \
         }                                               \
     }while (0)
 
 namespace LinkedList {
-    ListErrorCode InitList (List *list, size_t capacity) {
+
+    ListErrorCode InitList (List *list, size_t capacity, CallingFileData creationData) {
         PushLog (3);
 
         if (!list) {
             RETURN LIST_NULL_POINTER;
         }
 
-        list->tail = 0;
-
         list->capacity = (ssize_t) capacity + 1;
 
         list->next = (ssize_t *) calloc ((size_t) list->capacity, sizeof (ssize_t));
         list->prev = (ssize_t *) calloc ((size_t) list->capacity, sizeof (ssize_t));
         list->data = (elem_t *)  calloc ((size_t) list->capacity, sizeof (elem_t));
+
+        // TODO NULL checks
 
         list->data [0] = NAN;
         list->prev [0] = 0;
@@ -49,7 +52,9 @@ namespace LinkedList {
             list->prev [listIndex] = -1;
         }
 
-        Verification (list);
+        list->creationData = creationData;
+
+        Verification (list, creationData);
 
         RETURN NO_LIST_ERRORS;
     }
@@ -72,6 +77,61 @@ namespace LinkedList {
         RETURN NO_LIST_ERRORS;
     }
 
+    ListErrorCode InsertAfter (List *list, ssize_t insertIndex, ssize_t *newIndex, elem_t element, CallingFileData callData) {
+        PushLog (3);
+
+        custom_assert (newIndex, pointer_is_null, WRONG_INDEX);
+
+        Verification (list, callData);
+
+        if (insertIndex < 0 || insertIndex >= list->capacity) {
+            RETURN WRONG_INDEX;
+        }
+
+        if (list->prev [insertIndex] == -1) {
+            RETURN WRONG_INDEX;
+        }
+
+        if (list->freeElem == 0) {
+            RETURN INVALID_CAPACITY;
+        }
+
+        *newIndex = list->freeElem;
+        list->freeElem = list->next [list->freeElem];
+
+        list->prev [list->next [insertIndex]] = *newIndex;
+
+        list->next [*newIndex]   = list->next [insertIndex];
+        list->next [insertIndex] = *newIndex;
+        list->prev [*newIndex]   = insertIndex;
+        list->data [*newIndex]   = element;
+
+        RETURN NO_LIST_ERRORS;
+    }
+
+    ListErrorCode DeleteValue (List *list, ssize_t deleteIndex, CallingFileData callData) {
+        PushLog (3);
+
+        Verification (list, callData);
+
+        if (deleteIndex <= 0) {
+            RETURN WRONG_INDEX;
+        }
+
+        if (list->prev [deleteIndex] == -1) {
+            RETURN WRONG_INDEX;
+        }
+
+        list->prev [list->next [deleteIndex]] = list->prev [deleteIndex];
+        list->next [list->prev [deleteIndex]] = list->next [deleteIndex];
+
+        list->next [deleteIndex]    = list->freeElem;
+        list->prev [deleteIndex]    = -1;
+        list->freeElem              = deleteIndex;
+
+        RETURN NO_LIST_ERRORS;
+    }
+
     ListErrorCode VerifyList (List *list) {
         PushLog (3);
 
@@ -82,17 +142,26 @@ namespace LinkedList {
             RETURN LIST_NULL_POINTER;
         }
 
-        if (!list->data) {
-            ReturnErrors (list, DATA_NULL_POINTER);
-        }
+        if (!list->data)
+            WriteErrors (list, DATA_NULL_POINTER);
 
-        if (!list->prev) {
-            ReturnErrors (list, PREV_NULL_POINTER);
-        }
+        if (!list->prev)
+            WriteErrors (list, PREV_NULL_POINTER);
 
-        if (!list->next) {
-            ReturnErrors (list, NEXT_NULL_POINTER);
-        }
+        if (!list->next)
+            WriteErrors (list, NEXT_NULL_POINTER);
+
+        if (list->capacity < 0)
+            WriteErrors (list, INVALID_CAPACITY);
+
+        if (list->next [0] < 0 || list->next [0] >= list->capacity)
+            WriteErrors (list, INVALID_HEAD);
+
+        if (list->prev [0] < 0 || list->prev [0] >= list->capacity)
+            WriteErrors (list, INVALID_TAIL);
+
+        if (list->freeElem < 0 || list->freeElem >= list->capacity)
+            WriteErrors (list, FREE_LIST_ERROR);
 
         ssize_t freeIndex = list->freeElem;
 
@@ -108,60 +177,5 @@ namespace LinkedList {
         #undef ReturnErrors
 
         RETURN list->errors;
-    }
-
-    ListErrorCode InsertAfter (List *list, ssize_t insertIndex, ssize_t *newIndex, elem_t element) {
-        PushLog (3);
-
-        custom_assert (newIndex, pointer_is_null, WRONG_INDEX);
-
-        Verification (list);
-
-        if (insertIndex < 0 || insertIndex >= list->capacity) {
-            RETURN WRONG_INDEX;
-        }
-
-        if (list->freeElem == 0) {
-            // TODO realloc
-        }
-
-        *newIndex = list->freeElem;
-        list->freeElem = list->next [list->freeElem];
-
-        list->next [*newIndex]   = list->next [insertIndex];
-        list->next [insertIndex] = *newIndex;
-        list->prev [*newIndex]   = insertIndex;
-        list->data [*newIndex]   = element;
-
-        if (list->tail == insertIndex)
-            list->tail = *newIndex;
-
-        RETURN NO_LIST_ERRORS;
-    }
-
-    ListErrorCode DeleteValue (List *list, ssize_t deleteIndex) {
-        PushLog (3);
-
-        VerifyList (list);
-
-        if (deleteIndex <= 0) {
-            RETURN WRONG_INDEX;
-        }
-
-        if (list->prev [deleteIndex] == -1) {
-            RETURN WRONG_INDEX;
-        }
-
-        if (list->tail == deleteIndex)
-            list->tail = list->prev [deleteIndex];
-
-        list->prev [list->next [deleteIndex]] = list->prev [deleteIndex];
-        list->next [list->prev [deleteIndex]] = list->next [deleteIndex];
-
-        list->next [deleteIndex]    = list->freeElem;
-        list->prev [deleteIndex]    = -1;
-        list->freeElem              = deleteIndex;
-
-        RETURN NO_LIST_ERRORS;
     }
 }
