@@ -29,13 +29,26 @@ namespace LinkedList {
     ListErrorCode InitList (List *list, size_t capacity, CallingFileData creationData) {
         PushLog (3);
 
-        if (!list) {
+        if (!list) { // TODO how about to use your assert here?
             RETURN LIST_NULL_POINTER;
         }
 
         list->capacity = (ssize_t) capacity + 1;
 
-        list->next = (ssize_t *) calloc ((size_t) list->capacity, sizeof (ssize_t));
+        list->next = (ssize_t *) calloc ((size_t) list->capacity, sizeof (ssize_t)); 
+        // TODO I personally prefer doing it like: list->next = (ssize_t *) calloc ((size_t) list->capacity, sizeof (*(list->next))); 
+        //      But it's on you
+        /*TODO
+        use designators, please:
+        list = {
+            .capacity = 1,
+            .prev = ....,
+            .next = ....,
+            .data = ....,
+            ....
+        }
+        */
+        
         list->prev = (ssize_t *) calloc ((size_t) list->capacity, sizeof (ssize_t));
         list->data = (elem_t *)  calloc ((size_t) list->capacity, sizeof (elem_t));
 
@@ -65,7 +78,7 @@ namespace LinkedList {
         if (!list) {
             RETURN LIST_NULL_POINTER;
         }
-
+        // TODO define for next 3 lines
         memset (list->data, 0, (size_t) list->capacity * sizeof (elem_t));
         memset (list->prev, 0, (size_t) list->capacity * sizeof (size_t));
         memset (list->next, 0, (size_t) list->capacity * sizeof (size_t));
@@ -87,7 +100,7 @@ namespace LinkedList {
         if (insertIndex < 0 || insertIndex >= list->capacity) {
             RETURN WRONG_INDEX;
         }
-
+        // TODO you are able to combine that `if` with previous one
         if (list->prev [insertIndex] == -1) {
             RETURN WRONG_INDEX;
         }
@@ -117,6 +130,7 @@ namespace LinkedList {
         if (deleteIndex <= 0) {
             RETURN WRONG_INDEX;
         }
+        // TODO combine `ifs`
 
         if (list->prev [deleteIndex] == -1) {
             RETURN WRONG_INDEX;
@@ -142,6 +156,12 @@ namespace LinkedList {
             RETURN LIST_NULL_POINTER;
         }
 
+        // TODO I would suggest you to write define like:
+        /*
+            #define check_err(condition, err_code) \
+                if (!condition)                    \
+                    WriteErrors(list, ERROR_CODE);
+        */
         if (!list->data)
             WriteErrors (list, DATA_NULL_POINTER);
 
