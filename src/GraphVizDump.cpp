@@ -11,6 +11,11 @@
 #include "LinkedList.h"
 #include "Logger.h"
 
+// TODO fix your dump so vertices are displayed in one line
+//      and edges have bends at right angles
+//      then I'll check it
+ 
+
 namespace LinkedList {
 
     static ListErrorCode DumpNode            (List *list, ssize_t nodeIndex, Buffer <char> *graphvizBuffer);

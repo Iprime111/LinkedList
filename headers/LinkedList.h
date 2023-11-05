@@ -55,6 +55,9 @@ namespace LinkedList {
 
     #define CreateCallingFileData {__LINE__, __FILE__, __PRETTY_FUNCTION__}
 
+    // TODO I want you to remove underscores from this defines and add them to function
+    //      bc usually underscores are added to something internal
+     
     #define InitList_(list, capacity)                          InitList (list, capacity, CreateCallingFileData)
     #define InsertAfter_(list, insertIndex, newIndex, element) InsertAfter (list, insertIndex, newIndex, element, CreateCallingFileData)
     #define DeleteValue_(list, deleteIndex)                    DeleteValue (list, deleteIndex, CreateCallingFileData)
