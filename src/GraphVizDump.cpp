@@ -86,7 +86,7 @@ namespace LinkedList {
 
         CheckWriteErrors (graphvizBuffer, "\t");
         WriteIndexToDump (graphvizBuffer, indexBuffer, nodeIndex);
-        CheckWriteErrors (graphvizBuffer, " [style=\"filled, rounded\" fillcolor=\"" DUMP_NODE_COLOR "\" shape=\"record\" color=\"");
+        CheckWriteErrors (graphvizBuffer, " [style=\"filled, rounded\" fillcolor=\"" DUMP_NODE_COLOR "\" shape=\"Mrecord\" color=\"");
 
         if (list->prev [nodeIndex] < 0) {
             CheckWriteErrors (graphvizBuffer, DUMP_FREE_NODE_OUTLINE_COLOR);
@@ -94,11 +94,11 @@ namespace LinkedList {
             CheckWriteErrors (graphvizBuffer, DUMP_NODE_OUTLINE_COLOR);
         }
 
-        CheckWriteErrors (graphvizBuffer, "\" label=");
+        CheckWriteErrors (graphvizBuffer, "\" label=\"");
 
         char nodeDataBuffer [MAX_NODE_DATA_LENGTH] = "";
 
-        snprintf (nodeDataBuffer, MAX_NODE_DATA_LENGTH, "<<table>\n\t\t<tr><td> index: %ld </td></tr>\n\t\t<tr><td> data: %lf </td></tr>\n\t\t<tr><td>prev: %ld </td><td>next: %ld</td></tr>\n\t</table>>",
+        snprintf (nodeDataBuffer, MAX_NODE_DATA_LENGTH, "{<index> index: %ld | <data> data: %lf | {<prev> prev: %ld |<next> next: %ld}}\"",
                     nodeIndex, list->data [nodeIndex], list->prev [nodeIndex], list->next [nodeIndex]);
 
         CheckWriteErrors (graphvizBuffer, nodeDataBuffer);
@@ -152,7 +152,7 @@ namespace LinkedList {
 
         custom_assert (graphvizBuffer, pointer_is_null, GRAPHVIZ_BUFFER_ERROR);
 
-        CheckWriteErrors (graphvizBuffer, "digraph {\n\trankdir=\"LR\";\n\tbgcolor=\"" DUMP_BACKGROUND_COLOR "\";\n\tsplines=ortho;\n\t");
+        CheckWriteErrors (graphvizBuffer, "digraph {\n\trankdir=TB;\n\tbgcolor=\"" DUMP_BACKGROUND_COLOR "\";\n\tsplines=ortho\n\t");
 
         char indexBuffer [MAX_INDEX_LENGTH] = "";
 
@@ -165,7 +165,16 @@ namespace LinkedList {
         WriteIndexToDump (graphvizBuffer, indexBuffer, list->capacity - 1);
         CheckWriteErrors (graphvizBuffer, " [weight=999999 color=\"" DUMP_BACKGROUND_COLOR "\"];\n");
 
-        CheckWriteErrors (graphvizBuffer, "\tHeader [style=\"filled, rounded\" fillcolor=\"" DUMP_NODE_COLOR "\" shape=\"record\" color=\"" DUMP_HEADER_NODE_COLOR "\" label=\"");
+        CheckWriteErrors (graphvizBuffer, "\t{rank=same; ");
+
+        for (ssize_t nodeIndex = 0; nodeIndex < list->capacity; nodeIndex++) {
+            WriteIndexToDump (graphvizBuffer, indexBuffer, nodeIndex);
+            CheckWriteErrors (graphvizBuffer, " ");
+        }
+
+        CheckWriteErrors (graphvizBuffer, "}\n");
+
+        CheckWriteErrors (graphvizBuffer, "\tHeader [style=\"filled, rounded\" fillcolor=\"" DUMP_NODE_COLOR "\" shape=\"Mrecord\" color=\"" DUMP_HEADER_NODE_COLOR "\" label=\"");
 
         char nodeDataBuffer [MAX_NODE_DATA_LENGTH] = "";
 
@@ -173,22 +182,6 @@ namespace LinkedList {
                     list->next [0], list->prev [0], list->freeElem);
 
         CheckWriteErrors (graphvizBuffer, nodeDataBuffer);
-
-        const char *HeaderFieldAttributes = " [color=\"" DUMP_HEADER_NODE_COLOR "\"weight=2];\n";
-
-        CheckWriteErrors (graphvizBuffer, "\tHeader:head -> ");
-        WriteIndexToDump (graphvizBuffer, indexBuffer, list->next [0]);
-        CheckWriteErrors (graphvizBuffer, HeaderFieldAttributes);
-
-        CheckWriteErrors (graphvizBuffer, "\tHeader:tail -> ");
-        WriteIndexToDump (graphvizBuffer, indexBuffer, list->prev [0]);
-        CheckWriteErrors (graphvizBuffer, HeaderFieldAttributes);
-
-        CheckWriteErrors (graphvizBuffer, "\tHeader:free -> ");
-        WriteIndexToDump (graphvizBuffer, indexBuffer, list->freeElem);
-        CheckWriteErrors (graphvizBuffer, HeaderFieldAttributes);
-
-        CheckWriteErrors (graphvizBuffer, "\n");
 
         RETURN NO_LIST_ERRORS;
     }
