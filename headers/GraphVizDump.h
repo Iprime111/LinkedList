@@ -5,7 +5,7 @@
 
 namespace LinkedList {
     const size_t MAX_INDEX_LENGTH     = 32;
-    const size_t MAX_NODE_DATA_LENGTH = 128;
+    const size_t MAX_NODE_DATA_LENGTH = 256;
 
     #define DUMP_NODE_COLOR                 "#5e69db"
     #define DUMP_NODE_OUTLINE_COLOR         "#000000"

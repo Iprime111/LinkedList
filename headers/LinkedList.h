@@ -8,6 +8,7 @@ typedef double elem_t;
 
 namespace LinkedList {
     const size_t REALLOC_SCALE    = 2;
+    const elem_t EPS              = 1e-5;
 
     enum ListErrorCode {
         NO_LIST_ERRORS          = 0,
@@ -44,21 +45,26 @@ namespace LinkedList {
         CallingFileData creationData;
     };
 
-    ListErrorCode InitList    (List *list, size_t capacity, CallingFileData creationData);
-    ListErrorCode DestroyList (List *list);
-    ListErrorCode InsertAfter (List *list, ssize_t insertIndex, ssize_t *newIndex, elem_t element, CallingFileData callData);
-    ListErrorCode DeleteValue (List *list, ssize_t deleteIndex, CallingFileData callData);
-    ListErrorCode VerifyList  (List *list);
-    ListErrorCode DumpList    (List *list, char *logFolder, CallingFileData callData);
+    ListErrorCode InitList_    (List *list, size_t capacity, CallingFileData creationData);
+    ListErrorCode DestroyList_ (List *list);
+    ListErrorCode InsertAfter_ (List *list, ssize_t insertIndex, ssize_t *newIndex, elem_t element, CallingFileData callData);
+    ListErrorCode DeleteValue_ (List *list, ssize_t deleteIndex, CallingFileData callData);
+    ListErrorCode VerifyList_  (List *list);
+    ListErrorCode DumpList_    (List *list, char *logFolder, CallingFileData callData);
 
-    ListErrorCode FindValueInListSlowImplementation (List *list, elem_t value);
+    ListErrorCode FindValueInListSlowImplementation_ (List *list, elem_t value, ssize_t *index, CallingFileData callData);
 
     #define CreateCallingFileData {__LINE__, __FILE__, __PRETTY_FUNCTION__}
 
-    #define InitList_(list, capacity)                          InitList (list, capacity, CreateCallingFileData)
-    #define InsertAfter_(list, insertIndex, newIndex, element) InsertAfter (list, insertIndex, newIndex, element, CreateCallingFileData)
-    #define DeleteValue_(list, deleteIndex)                    DeleteValue (list, deleteIndex, CreateCallingFileData)
-    #define DumpList_(list, logFolder)                         DumpList (list, logFolder, CreateCallingFileData)
+    #define InitList(list, capacity)                          InitList_    (list, capacity, CreateCallingFileData)
+    #define InsertAfter(list, insertIndex, newIndex, element) InsertAfter_ (list, insertIndex, newIndex, element, CreateCallingFileData)
+    #define DeleteValue(list, deleteIndex)                    DeleteValue_ (list, deleteIndex, CreateCallingFileData)
+    #define DumpList(list, logFolder)                         DumpList_    (list, logFolder, CreateCallingFileData)
+    #define DestroyList(list)                                 DestroyList_ (list)
+    #define VerifyList(list)                                  VerifyList_  (list)
+
+    #define FindValueInListSlowImplementation(list, value, index)\
+                FindValueInListSlowImplementation_ (list, value, index, CreateCallingFileData);
 
 }
 #endif

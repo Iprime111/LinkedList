@@ -7,18 +7,18 @@ int main () {
     PushLog (1);
 
     LinkedList::List list = {};
-    LinkedList::InitList_ (&list, 10);
+    LinkedList::InitList (&list, 10);
 
     ssize_t newIndex = 0;
-    LinkedList::InsertAfter_ (&list, 0,        &newIndex, 5);
-    LinkedList::InsertAfter_ (&list, newIndex, &newIndex, 6);
-    LinkedList::InsertAfter_ (&list, newIndex, &newIndex, 7);
+    LinkedList::InsertAfter (&list, 0,        &newIndex, 5);
+    LinkedList::InsertAfter (&list, newIndex, &newIndex, 6);
+    LinkedList::InsertAfter (&list, newIndex, &newIndex, 7);
 
-    LinkedList::DeleteValue_ (&list, 1);
+    LinkedList::DeleteValue (&list, 1);
 
-    LinkedList::InsertAfter_ (&list, newIndex, &newIndex, 4);
+    LinkedList::InsertAfter (&list, newIndex, &newIndex, 4);
 
-    LinkedList::DumpList_ (&list, ".");
+    LinkedList::DumpList (&list, ".");
 
     LinkedList::DestroyList (&list);
 

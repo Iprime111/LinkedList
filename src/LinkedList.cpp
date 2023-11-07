@@ -17,16 +17,16 @@
 
 #define Verification(list, callData)                    \
     do {                                                \
-        ListErrorCode errorCode_ = VerifyList (list);   \
+        ListErrorCode errorCode_ = VerifyList_ (list);  \
         if (errorCode_ != NO_LIST_ERRORS) {             \
-            ON_DEBUG (DumpList (list, ".", callData));  \
+            ON_DEBUG (DumpList_ (list, ".", callData)); \
             RETURN errorCode_;                          \
         }                                               \
     }while (0)
 
 namespace LinkedList {
 
-    ListErrorCode InitList (List *list, size_t capacity, CallingFileData creationData) {
+    ListErrorCode InitList_ (List *list, size_t capacity, CallingFileData creationData) {
         PushLog (3);
 
         if (!list) {
@@ -39,7 +39,17 @@ namespace LinkedList {
         list->prev = (ssize_t *) calloc ((size_t) list->capacity, sizeof (ssize_t));
         list->data = (elem_t *)  calloc ((size_t) list->capacity, sizeof (elem_t));
 
-        // TODO NULL checks
+        if (!list->prev) {
+            RETURN PREV_NULL_POINTER;
+        }
+
+        if (!list->next) {
+            RETURN NEXT_NULL_POINTER;
+        }
+
+        if (!list->data) {
+            RETURN DATA_NULL_POINTER;
+        }
 
         list->data [0] = NAN;
         list->prev [0] = 0;
@@ -59,7 +69,7 @@ namespace LinkedList {
         RETURN NO_LIST_ERRORS;
     }
 
-    ListErrorCode DestroyList (List *list) {
+    ListErrorCode DestroyList_ (List *list) {
         PushLog (3);
 
         if (!list) {
@@ -77,7 +87,7 @@ namespace LinkedList {
         RETURN NO_LIST_ERRORS;
     }
 
-    ListErrorCode InsertAfter (List *list, ssize_t insertIndex, ssize_t *newIndex, elem_t element, CallingFileData callData) {
+    ListErrorCode InsertAfter_ (List *list, ssize_t insertIndex, ssize_t *newIndex, elem_t element, CallingFileData callData) {
         PushLog (3);
 
         custom_assert (newIndex, pointer_is_null, WRONG_INDEX);
@@ -109,7 +119,7 @@ namespace LinkedList {
         RETURN NO_LIST_ERRORS;
     }
 
-    ListErrorCode DeleteValue (List *list, ssize_t deleteIndex, CallingFileData callData) {
+    ListErrorCode DeleteValue_ (List *list, ssize_t deleteIndex, CallingFileData callData) {
         PushLog (3);
 
         Verification (list, callData);
@@ -177,5 +187,19 @@ namespace LinkedList {
         #undef ReturnErrors
 
         RETURN list->errors;
+    }
+
+    ListErrorCode FindValueInListSlowImplementation_ (List *list, elem_t value, ssize_t *index, CallingFileData callData) {
+        PushLog (3);
+
+        for (ssize_t elementIndex = list->next [0]; elementIndex != 0; elementIndex = list->next [elementIndex]) {
+            if (abs (list->data [elementIndex] - value) < EPS) {
+                *index = elementIndex;
+                RETURN NO_LIST_ERRORS;
+            }
+        }
+
+        *index = -1;
+        RETURN NO_LIST_ERRORS;
     }
 }

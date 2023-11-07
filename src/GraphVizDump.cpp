@@ -31,7 +31,7 @@ namespace LinkedList {
                 snprintf (indexBuffer, MAX_INDEX_LENGTH, "%ld", index); \
                 CheckWriteErrors (dumpBuffer, indexBuffer)
 
-    ListErrorCode DumpList (List *list, char *logFolder, CallingFileData callData) {
+    ListErrorCode DumpList_ (List *list, char *logFolder, CallingFileData callData) {
         PushLog (3);
 
         ListErrorCode verificationResult = VerifyList (list);
@@ -94,11 +94,11 @@ namespace LinkedList {
             CheckWriteErrors (graphvizBuffer, DUMP_NODE_OUTLINE_COLOR);
         }
 
-        CheckWriteErrors (graphvizBuffer, "\" label=\"");
+        CheckWriteErrors (graphvizBuffer, "\" label=");
 
         char nodeDataBuffer [MAX_NODE_DATA_LENGTH] = "";
 
-        snprintf (nodeDataBuffer, MAX_NODE_DATA_LENGTH, "<index> index: %ld | <data> data: %lf | {<prev> prev: %ld |<next> next: %ld} \"",
+        snprintf (nodeDataBuffer, MAX_NODE_DATA_LENGTH, "<<table>\n\t\t<tr><td> index: %ld </td></tr>\n\t\t<tr><td> data: %lf </td></tr>\n\t\t<tr><td>prev: %ld </td><td>next: %ld</td></tr>\n\t</table>>",
                     nodeIndex, list->data [nodeIndex], list->prev [nodeIndex], list->next [nodeIndex]);
 
         CheckWriteErrors (graphvizBuffer, nodeDataBuffer);
@@ -152,7 +152,7 @@ namespace LinkedList {
 
         custom_assert (graphvizBuffer, pointer_is_null, GRAPHVIZ_BUFFER_ERROR);
 
-        CheckWriteErrors (graphvizBuffer, "digraph {\n\trankdir=\"LR\";\n\tbgcolor=\"" DUMP_BACKGROUND_COLOR "\";\n\t");
+        CheckWriteErrors (graphvizBuffer, "digraph {\n\trankdir=\"LR\";\n\tbgcolor=\"" DUMP_BACKGROUND_COLOR "\";\n\tsplines=ortho;\n\t");
 
         char indexBuffer [MAX_INDEX_LENGTH] = "";
 
