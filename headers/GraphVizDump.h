@@ -12,7 +12,6 @@ namespace LinkedList {
     #define DUMP_FREE_NODE_OUTLINE_COLOR    "#10c929"
     #define DUMP_NEXT_CONNECTION_COLOR      "#10c94b"
     #define DUMP_PREV_CONNECTION_COLOR      "#c95410"
-    #define DUMP_NULL_CONNECTION_COLOR      "#002fff"
     #define DUMP_BACKGROUND_COLOR           "#393f87"
     #define DUMP_HEADER_NODE_COLOR          "#dbd802"
 }
