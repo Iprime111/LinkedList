@@ -1,3 +1,4 @@
+#include <bits/types/FILE.h>
 #include <cstddef>
 #include <cstdio>
 #include <stdlib.h>
@@ -19,6 +20,7 @@ namespace LinkedList {
     static ListErrorCode WriteDumpHeader     (List *list, Buffer <char> *graphvizBuffer, CallingFileData *callData);
     static ListErrorCode WriteCallData       (List *list, CallingFileData *callData, Buffer <char> *graphvizBuffer);
     static char         *GetLogFilename      (char *logFolder);
+    static ListErrorCode WriteToHtml         (char *dotFilename);
 
     #define CheckWriteErrors(buffer, data)                                                          \
                 do  {                                                                               \
@@ -68,13 +70,66 @@ namespace LinkedList {
         }
 
         FILE *logFile = fopen (filename, "w");
+        if (!logFile) {
+            free (filename);
+            RETURN LOG_FILE_ERROR;
+        }
+
         fwrite (graphvizBuffer.data, graphvizBuffer.currentIndex, sizeof (char), logFile);
         fclose (logFile);
+
+        WriteToHtml (filename);
 
         free (filename);
         DestroyBuffer (&graphvizBuffer);
 
         RETURN NO_LIST_ERRORS;
+    }
+
+    static ListErrorCode WriteToHtml (char *dotFilename) {
+        PushLog (4);
+
+        char htmlFileCommand [FILENAME_MAX * 2] = "";
+        char imageFilename   [FILENAME_MAX]     = "";
+
+        snprintf (imageFilename,   FILENAME_MAX,     "%s.svg",            dotFilename);
+        snprintf (htmlFileCommand, FILENAME_MAX * 2, "dot -Tsvg %s > %s", dotFilename, imageFilename);
+
+        system (htmlFileCommand);
+
+        FILE *htmlFile  = fopen (HTML_FILENAME, "a");
+        if (!htmlFile) {
+            RETURN LOG_FILE_ERROR;
+        }
+
+        FILE *imageFile = fopen (imageFilename, "r");
+        if (!imageFile) {
+            fclose (htmlFile);
+            RETURN LOG_FILE_ERROR;
+        }
+
+        fprintf (htmlFile, "This dump has been created from file %s. List graph:", dotFilename);
+
+        int byte = fgetc (imageFile);
+
+        while (byte != EOF) {
+            fputc (byte, htmlFile);
+            byte = fgetc (imageFile);
+        }
+
+        fclose (htmlFile);
+        fclose (imageFile);
+
+        RETURN NO_LIST_ERRORS;
+    }
+
+    ListErrorCode ClearHtmlFile () {
+        FILE *htmlFile= fopen (HTML_FILENAME, "w");
+        if (!htmlFile)
+            return NO_LIST_ERRORS;
+
+        fclose (htmlFile);
+        return NO_LIST_ERRORS;
     }
 
     static ListErrorCode DumpNode (List *list, ssize_t nodeIndex, Buffer <char> *graphvizBuffer) {
@@ -264,7 +319,7 @@ namespace LinkedList {
         int versionCounter = 0;
 
         do {
-            snprintf (filename, FILENAME_MAX, "%s/%.2d-%.2d-%.4d_%.2d:%.2d:%.2d(%d).dot", logFolder, localTime.tm_mday, localTime.tm_mon,
+            snprintf (filename, FILENAME_MAX, "%s/%.2d-%.2d-%.4d_%.2d:%.2d:%.2d_%d.dot", logFolder, localTime.tm_mday, localTime.tm_mon,
                         localTime.tm_year + 1900, localTime.tm_hour, localTime.tm_min, localTime.tm_sec, versionCounter);
 
             versionCounter++;

@@ -2,8 +2,11 @@
 #define GRAPHVIZ_DUMP_H_
 
 #include "LinkedList.h"
+#include <stdio.h>
 
 namespace LinkedList {
+    const char HTML_FILENAME [FILENAME_MAX] = "dump.html";
+
     const size_t MAX_INDEX_LENGTH     = 32;
     const size_t MAX_NODE_DATA_LENGTH = 256;
 

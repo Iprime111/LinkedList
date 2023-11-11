@@ -8,6 +8,7 @@ int main () {
 
     LinkedList::List list = {};
     LinkedList::InitList (&list, 10);
+    LinkedList::ClearHtmlFile ();
 
     ssize_t newIndex = 0;
     LinkedList::InsertAfter (&list, 0,        &newIndex, 5);
