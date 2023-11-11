@@ -16,7 +16,7 @@ namespace LinkedList {
     static ListErrorCode DumpNode            (List *list, ssize_t nodeIndex, Buffer <char> *graphvizBuffer);
     static ListErrorCode DumpNodeConnections (List *list, ssize_t nodeIndex, Buffer <char> *graphvizBuffer);
     static ListErrorCode DumpConnection      (List *list, Buffer <char> *graphvizBuffer, const char *from, const char *to, const char *color);
-    static ListErrorCode WriteDumpHeader     (List *list, Buffer <char> *graphvizBuffer);
+    static ListErrorCode WriteDumpHeader     (List *list, Buffer <char> *graphvizBuffer, CallingFileData *callData);
     static ListErrorCode WriteCallData       (List *list, CallingFileData *callData, Buffer <char> *graphvizBuffer);
     static char         *GetLogFilename      (char *logFolder);
 
@@ -46,7 +46,7 @@ namespace LinkedList {
             RETURN GRAPHVIZ_BUFFER_ERROR;
         }
 
-        WriteDumpHeader (list, &graphvizBuffer);
+        WriteDumpHeader (list, &graphvizBuffer, &callData);
         WriteCallData (list, &callData, &graphvizBuffer);
 
         for (ssize_t nodeIndex = 0; nodeIndex < list->capacity; nodeIndex++) {
@@ -163,16 +163,18 @@ namespace LinkedList {
         RETURN NO_LIST_ERRORS;
     }
 
-    static ListErrorCode WriteDumpHeader (List *list, Buffer <char> *graphvizBuffer) {
+    static ListErrorCode WriteDumpHeader (List *list, Buffer <char> *graphvizBuffer, CallingFileData *callData) {
         PushLog (4);
 
         custom_assert (graphvizBuffer, pointer_is_null, GRAPHVIZ_BUFFER_ERROR);
 
         CheckWriteErrors (graphvizBuffer, "digraph {\n\tbgcolor=\"" DUMP_BACKGROUND_COLOR "\";\n\tsplines=ortho\n\t");
 
+        WriteCallData (list, callData, graphvizBuffer);
+
         char indexBuffer [MAX_INDEX_LENGTH] = "";
 
-        for (ssize_t nodeIndex = list->freeElem; nodeIndex > 0 && nodeIndex < list->capacity; nodeIndex = list->next [nodeIndex]) {
+        for (ssize_t nodeIndex = list->next [0]; nodeIndex > 0 && nodeIndex < list->capacity; nodeIndex = list->next [nodeIndex]) {
             WriteIndexToDump (graphvizBuffer, indexBuffer, nodeIndex);
 
             CheckWriteErrors (graphvizBuffer, " -> ");
@@ -180,7 +182,7 @@ namespace LinkedList {
 
         CheckWriteErrors (graphvizBuffer, " 0 -> ");
 
-        for (ssize_t nodeIndex = list->next [0]; nodeIndex > 0 && nodeIndex < list->capacity; nodeIndex = list->next [nodeIndex]) {
+        for (ssize_t nodeIndex = list->freeElem; nodeIndex > 0 && nodeIndex < list->capacity; nodeIndex = list->next [nodeIndex]) {
             WriteIndexToDump (graphvizBuffer, indexBuffer, nodeIndex);
 
             CheckWriteErrors (graphvizBuffer, " -> ");
