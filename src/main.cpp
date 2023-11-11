@@ -14,6 +14,8 @@ int main () {
     LinkedList::InsertAfter (&list, newPointer, &newPointer, 6);
     LinkedList::InsertAfter (&list, newPointer, &newPointer, 7);
 
+    DumpList (&list, ".");
+
     LinkedList::DeleteValue (&list, list.head->next);
 
     LinkedList::InsertAfter (&list, newPointer, &newPointer, 4);
