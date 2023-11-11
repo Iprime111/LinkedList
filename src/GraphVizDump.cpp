@@ -234,13 +234,13 @@ namespace LinkedList {
 
         char callDataBuffer [FILENAME_MAX] = "";
 
-        CheckWriteErrors (graphvizBuffer, "\tCreation [shape=rectangle rank=max label=\"Was created in ");
+        CheckWriteErrors (graphvizBuffer, "\tCreation [shape=rectangle style=filled fillcolor=\"" DUMP_NODE_COLOR "\" rank=max label=\"Was created in ");
         snprintf (callDataBuffer, FILENAME_MAX, "%s (%s:%d)",
                     list->creationData.function, list->creationData.file, list->creationData.line);
         CheckWriteErrors (graphvizBuffer, callDataBuffer);
         CheckWriteErrors (graphvizBuffer, "\"]\n");
 
-        CheckWriteErrors (graphvizBuffer, "\tCall [shape=rectangle rank=max label=\"Was called in ");
+        CheckWriteErrors (graphvizBuffer, "\tCall [shape=rectangle style=filled fillcolor=\"" DUMP_NODE_COLOR "\" rank=max label=\"Was called in ");
         snprintf (callDataBuffer, FILENAME_MAX, "%s (%s:%d)",
                     callData->function, callData->file, callData->line);
         CheckWriteErrors (graphvizBuffer, callDataBuffer);
