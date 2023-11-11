@@ -9,6 +9,8 @@ int main () {
     LinkedList::List list = {};
     LinkedList::InitList (&list);
 
+    LinkedList::ClearHtmlFile ();
+
     LinkedList::Node *newPointer = 0;
     LinkedList::InsertAfter (&list, list.head,  &newPointer, 5);
     LinkedList::InsertAfter (&list, newPointer, &newPointer, 6);

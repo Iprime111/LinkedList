@@ -1,5 +1,6 @@
 #include <cstddef>
 #include <cstdio>
+#include <cstdlib>
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
@@ -19,7 +20,7 @@ namespace LinkedList {
     static ListErrorCode WriteDumpHeader     (List *list, Buffer <char> *graphvizBuffer, CallingFileData *callData);
     static ListErrorCode WriteCallData       (List *list, CallingFileData *callData, Buffer <char> *graphvizBuffer);
     static char         *GetLogFilename      (char *logFolder);
-    static ListErrorCode WriteToHtml         (char *dotFilename)
+    static ListErrorCode WriteToHtml         (char *dotFilename);
 
     #define CheckWriteErrors(buffer, data)                                                          \
                 do  {                                                                               \
@@ -72,6 +73,11 @@ namespace LinkedList {
         }
 
         FILE *logFile = fopen (filename, "w");
+        if (!logFile) {
+            free (filename);
+            RETURN LOG_FILE_ERROR;
+        }
+
         fwrite (graphvizBuffer.data, graphvizBuffer.currentIndex, sizeof (char), logFile);
         fclose (logFile);
         DestroyBuffer (&graphvizBuffer);
@@ -95,7 +101,15 @@ namespace LinkedList {
         system (htmlFileCommand);
 
         FILE *htmlFile  = fopen (HTML_FILENAME, "a");
+        if (!htmlFile) {
+            RETURN LOG_FILE_ERROR;
+        }
+
         FILE *imageFile = fopen (imageFilename, "r");
+        if (!imageFile) {
+            fclose (htmlFile);
+            RETURN LOG_FILE_ERROR;
+        }
 
         fprintf (htmlFile, "This dump has been created from file %s. List graph:", dotFilename);
 
@@ -110,6 +124,15 @@ namespace LinkedList {
         fclose (imageFile);
 
         RETURN NO_LIST_ERRORS;
+    }
+
+    ListErrorCode ClearHtmlFile () {
+        FILE *htmlFile= fopen (HTML_FILENAME, "w");
+        if (!htmlFile)
+            return NO_LIST_ERRORS;
+
+        fclose (htmlFile);
+        return NO_LIST_ERRORS;
     }
 
     static ListErrorCode DumpNode (List *list, Node *nodePointer, Buffer <char> *graphvizBuffer) {

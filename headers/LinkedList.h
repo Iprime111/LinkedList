@@ -53,6 +53,8 @@ namespace LinkedList {
 
     ListErrorCode FindValueInListSlowImplementation_ (List *list, elem_t value, Node **foundValuePointer, CallingFileData callData);
 
+    ListErrorCode ClearHtmlFile ();
+
     #define CreateCallingFileData {__LINE__, __FILE__, __PRETTY_FUNCTION__}
 
     #define InitList(list)                                          InitList_    (list, CreateCallingFileData)
