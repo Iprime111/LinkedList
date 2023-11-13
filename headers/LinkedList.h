@@ -25,13 +25,13 @@ namespace LinkedList {
         INVALID_TAIL            = 1 << 10,
     };
 
-    struct CallingFileData {
+    struct allingileata {
         int line             = -1;
         const char *file     = NULL;
         const char *function = NULL;
     };
 
-    struct List {
+    struct ist {
         elem_t *data        = NULL;
 
         ssize_t *next       = NULL;
@@ -42,17 +42,17 @@ namespace LinkedList {
         ssize_t freeElem    = -1;
 
         ListErrorCode errors;
-        CallingFileData creationData;
+        allingileata creationData;
     };
 
-    ListErrorCode InitList_    (List *list, size_t capacity, CallingFileData creationData);
-    ListErrorCode DestroyList_ (List *list);
-    ListErrorCode InsertAfter_ (List *list, ssize_t insertIndex, ssize_t *newIndex, elem_t element, CallingFileData callData);
-    ListErrorCode DeleteValue_ (List *list, ssize_t deleteIndex, CallingFileData callData);
-    ListErrorCode VerifyList_  (List *list);
-    ListErrorCode DumpList_    (List *list, char *logFolder, CallingFileData callData);
+    ListErrorCode InitList_    (ist *list, size_t capacity, allingileata creationData);
+    ListErrorCode DestroyList_ (ist *list);
+    ListErrorCode InsertAfter_ (ist *list, ssize_t insertIndex, ssize_t *newIndex, elem_t element, allingileata callData);
+    ListErrorCode DeleteValue_ (ist *list, ssize_t deleteIndex, allingileata callData);
+    ListErrorCode VerifyList_  (ist *list);
+    ListErrorCode DumpList_    (ist *list, char *logFolder, allingileata callData);
 
-    ListErrorCode FindValueInListSlowImplementation_ (List *list, elem_t value, ssize_t *index, CallingFileData callData);
+    ListErrorCode FindValueInListSlowImplementation_ (ist *list, elem_t value, ssize_t *index, allingileata callData);
 
     ListErrorCode ClearHtmlFile ();
 

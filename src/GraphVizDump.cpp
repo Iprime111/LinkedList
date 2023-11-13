@@ -14,11 +14,11 @@
 
 namespace LinkedList {
 
-    static ListErrorCode DumpNode            (List *list, ssize_t nodeIndex, Buffer <char> *graphvizBuffer);
-    static ListErrorCode DumpNodeConnections (List *list, ssize_t nodeIndex, Buffer <char> *graphvizBuffer);
-    static ListErrorCode DumpConnection      (List *list, Buffer <char> *graphvizBuffer, const char *from, const char *to, const char *color);
-    static ListErrorCode WriteDumpHeader     (List *list, Buffer <char> *graphvizBuffer, CallingFileData *callData);
-    static ListErrorCode WriteCallData       (List *list, CallingFileData *callData, Buffer <char> *graphvizBuffer);
+    static ListErrorCode DumpNode            (ist *list, ssize_t nodeIndex, Buffer <char> *graphvizBuffer);
+    static ListErrorCode DumpNodeConnections (ist *list, ssize_t nodeIndex, Buffer <char> *graphvizBuffer);
+    static ListErrorCode DumpConnection      (ist *list, Buffer <char> *graphvizBuffer, const char *from, const char *to, const char *color);
+    static ListErrorCode WriteDumpHeader     (ist *list, Buffer <char> *graphvizBuffer, allingileata *callData);
+    static ListErrorCode WriteCallData       (ist *list, allingileata *callData, Buffer <char> *graphvizBuffer);
     static char         *GetLogFilename      (char *logFolder);
     static ListErrorCode WriteToHtml         (char *dotFilename);
 
@@ -34,7 +34,7 @@ namespace LinkedList {
                 snprintf (indexBuffer, MAX_INDEX_LENGTH, "%ld", index); \
                 CheckWriteErrors (dumpBuffer, indexBuffer)
 
-    ListErrorCode DumpList_ (List *list, char *logFolder, CallingFileData callData) {
+    ListErrorCode DumpList_ (ist *list, char *logFolder, allingileata callData) {
         PushLog (3);
 
         ListErrorCode verificationResult = VerifyList (list);
@@ -132,7 +132,7 @@ namespace LinkedList {
         return NO_LIST_ERRORS;
     }
 
-    static ListErrorCode DumpNode (List *list, ssize_t nodeIndex, Buffer <char> *graphvizBuffer) {
+    static ListErrorCode DumpNode (ist *list, ssize_t nodeIndex, Buffer <char> *graphvizBuffer) {
         PushLog (3);
 
         custom_assert (list,           pointer_is_null, LIST_NULL_POINTER);
@@ -168,7 +168,7 @@ namespace LinkedList {
         RETURN NO_LIST_ERRORS;
     }
 
-    static ListErrorCode DumpNodeConnections (List *list, ssize_t nodeIndex, Buffer <char> *graphvizBuffer) {
+    static ListErrorCode DumpNodeConnections (ist *list, ssize_t nodeIndex, Buffer <char> *graphvizBuffer) {
         PushLog (3);
 
         custom_assert (list,           pointer_is_null, LIST_NULL_POINTER);
@@ -204,7 +204,7 @@ namespace LinkedList {
         RETURN NO_LIST_ERRORS;
     }
 
-    static ListErrorCode DumpConnection (List *list, Buffer <char> *graphvizBuffer, const char *from, const char *to, const char *color) {
+    static ListErrorCode DumpConnection (ist *list, Buffer <char> *graphvizBuffer, const char *from, const char *to, const char *color) {
         PushLog (3);
 
         CheckWriteErrors (graphvizBuffer, "\t");
@@ -218,7 +218,7 @@ namespace LinkedList {
         RETURN NO_LIST_ERRORS;
     }
 
-    static ListErrorCode WriteDumpHeader (List *list, Buffer <char> *graphvizBuffer, CallingFileData *callData) {
+    static ListErrorCode WriteDumpHeader (ist *list, Buffer <char> *graphvizBuffer, allingileata *callData) {
         PushLog (4);
 
         custom_assert (graphvizBuffer, pointer_is_null, GRAPHVIZ_BUFFER_ERROR);
@@ -284,7 +284,7 @@ namespace LinkedList {
         RETURN NO_LIST_ERRORS;
     }
 
-    static ListErrorCode WriteCallData (List *list, CallingFileData *callData, Buffer <char> *graphvizBuffer) {
+    static ListErrorCode WriteCallData (ist *list, allingileata *callData, Buffer <char> *graphvizBuffer) {
         PushLog (4);
 
         char callDataBuffer [FILENAME_MAX] = "";

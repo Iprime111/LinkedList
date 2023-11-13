@@ -6,7 +6,7 @@
 int main () {
     PushLog (1);
 
-    LinkedList::List list = {};
+    LinkedList::ist list = {};
     LinkedList::InitList (&list, 10);
     LinkedList::ClearHtmlFile ();
 

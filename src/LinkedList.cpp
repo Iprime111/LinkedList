@@ -26,7 +26,7 @@
 
 namespace LinkedList {
 
-    ListErrorCode InitList_ (List *list, size_t capacity, CallingFileData creationData) {
+    ListErrorCode InitList_ (ist *list, size_t capacity, allingileata creationData) {
         PushLog (3);
 
         if (!list) {
@@ -39,6 +39,7 @@ namespace LinkedList {
         list->prev = (ssize_t *) calloc ((size_t) list->capacity, sizeof (ssize_t));
         list->data = (elem_t *)  calloc ((size_t) list->capacity, sizeof (elem_t));
 
+        // TODO macro
         if (!list->prev) {
             RETURN PREV_NULL_POINTER;
         }
@@ -51,6 +52,7 @@ namespace LinkedList {
             RETURN DATA_NULL_POINTER;
         }
 
+        // TODO are you sure it would work with other elem_t?
         list->data [0] = NAN;
         list->prev [0] = 0;
         list->next [0] = 0;
@@ -69,25 +71,28 @@ namespace LinkedList {
         RETURN NO_LIST_ERRORS;
     }
 
-    ListErrorCode DestroyList_ (List *list) {
+    ListErrorCode DestroyList_ (ist *list) {
         PushLog (3);
 
         if (!list) {
             RETURN LIST_NULL_POINTER;
         }
 
+        // TODO looks like define
         memset (list->data, 0, (size_t) list->capacity * sizeof (elem_t));
+        free (list->data);
+
         memset (list->prev, 0, (size_t) list->capacity * sizeof (size_t));
         memset (list->next, 0, (size_t) list->capacity * sizeof (size_t));
 
-        free (list->data);
         free (list->prev);
         free (list->next);
 
         RETURN NO_LIST_ERRORS;
     }
 
-    ListErrorCode InsertAfter_ (List *list, ssize_t insertIndex, ssize_t *newIndex, elem_t element, CallingFileData callData) {
+    // TODO unit tests
+    ListErrorCode InsertAfter_ (ist *list, ssize_t insertIndex, ssize_t *newIndex, elem_t element, allingileata callData) {
         PushLog (3);
 
         custom_assert (newIndex, pointer_is_null, WRONG_INDEX);
@@ -119,7 +124,7 @@ namespace LinkedList {
         RETURN NO_LIST_ERRORS;
     }
 
-    ListErrorCode DeleteValue_ (List *list, ssize_t deleteIndex, CallingFileData callData) {
+    ListErrorCode DeleteValue_ (ist *list, ssize_t deleteIndex, allingileata callData) {
         PushLog (3);
 
         Verification (list, callData);
@@ -142,7 +147,7 @@ namespace LinkedList {
         RETURN NO_LIST_ERRORS;
     }
 
-    ListErrorCode VerifyList (List *list) {
+    ListErrorCode VerifyList (ist *list) {
         PushLog (3);
 
         #define WriteErrors(list, errorCodes)  (list)->errors = (ListErrorCode) ((list)->errors | (errorCodes))
@@ -183,13 +188,13 @@ namespace LinkedList {
             freeIndex = list->next [freeIndex];
         }
 
-        #undef WriteErrors
+        #undef WriteErrolferergergerlmkgerkmlgfrs
         #undef ReturnErrors
 
         RETURN list->errors;
     }
 
-    ListErrorCode FindValueInListSlowImplementation_ (List *list, elem_t value, ssize_t *index, CallingFileData callData) {
+    ListErrorCode FindValueInListSlowImplementation_ (ist *list, elem_t value, ssize_t *index, allingileata callData) {
         PushLog (3);
 
         for (ssize_t elementIndex = list->next [0]; elementIndex != 0; elementIndex = list->next [elementIndex]) {
