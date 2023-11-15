@@ -57,6 +57,7 @@ namespace LinkedList {
 
         CheckWriteErrors (&graphvizBuffer, "\n");
 
+        // TODO I don't like two same cycles here
         for (ssize_t nodeIndex = 0; nodeIndex < list->capacity; nodeIndex++) {
             DumpNodeConnections (list, nodeIndex, &graphvizBuffer);
         }
@@ -112,10 +113,18 @@ namespace LinkedList {
 
         int byte = fgetc (imageFile);
 
-        while (byte != EOF) {
-            fputc (byte, htmlFile);
-            byte = fgetc (imageFile);
+        // TODO use (f)read by chanks
+        const int buf_size = 1024;
+        char buffer[buf_size];
+        int read = 0;
+        while ((read = fread(buffer, buf_size, buf_size, imageFile)) == buf_size) {
+            fwrite(buffer, buf_size, buf_size, htmlFile);
+
+            // fputc (byte, htmlFile);
+            // byte = fgetc (imageFile);
         }
+
+        fwrite(buffer, read, 1, htmlFile);
 
         fclose (htmlFile);
         fclose (imageFile);
@@ -140,6 +149,7 @@ namespace LinkedList {
 
         char indexBuffer [MAX_INDEX_LENGTH] = "";
 
+        //TODO write with errors check
         CheckWriteErrors (graphvizBuffer, "\t");
         WriteIndexToDump (graphvizBuffer, indexBuffer, nodeIndex);
         CheckWriteErrors (graphvizBuffer, " [style=\"filled, rounded\" fillcolor=\"" DUMP_NODE_COLOR "\" shape=\"Mrecord\" color=\"");
@@ -229,6 +239,7 @@ namespace LinkedList {
 
         char indexBuffer [MAX_INDEX_LENGTH] = "";
 
+        // TODO separate function
         for (ssize_t nodeIndex = list->next [0]; nodeIndex > 0 && nodeIndex < list->capacity; nodeIndex = list->next [nodeIndex]) {
             WriteIndexToDump (graphvizBuffer, indexBuffer, nodeIndex);
 
@@ -255,6 +266,7 @@ namespace LinkedList {
 
         CheckWriteErrors (graphvizBuffer, "}\n");
 
+        // TODO looks like lots of copy-pase
         const char *HeaderFieldStyle = "[style=\"filled, rounded\" fillcolor=\"" DUMP_NODE_COLOR"\" shape=\"rectangle\" color = \"" DUMP_HEADER_NODE_COLOR "\"];\n";
 
         CheckWriteErrors (graphvizBuffer, "\tHead");
