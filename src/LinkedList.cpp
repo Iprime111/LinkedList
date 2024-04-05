@@ -15,18 +15,20 @@
     #define ON_DEBUG(...)
 #endif
 
-#define Verification(list, callData)                    \
-    do {                                                \
-        ListErrorCode errorCode_ = VerifyList_ (list);  \
-        if (errorCode_ != NO_LIST_ERRORS) {             \
-            ON_DEBUG (DumpList_ (list, ".", callData)); \
-            RETURN errorCode_;                          \
-        }                                               \
-    }while (0)
+#define Verification(list, callData)                        \
+    ON_DEBUG (                                              \
+        do {                                                \
+            ListErrorCode errorCode_ = VerifyList_ (list);  \
+            if (errorCode_ != NO_LIST_ERRORS) {             \
+                ON_DEBUG (DumpList_ (list, ".", callData)); \
+                RETURN errorCode_;                          \
+            }                                               \
+        } while (0)                                         \
+    )
 
 namespace LinkedList {
 
-    ListErrorCode InitList_ (ist *list, size_t capacity, allingileata creationData) {
+    ListErrorCode InitList_ (List *list, size_t capacity, CallingFileData creationData) {
         PushLog (3);
 
         if (!list) {
@@ -39,21 +41,14 @@ namespace LinkedList {
         list->prev = (ssize_t *) calloc ((size_t) list->capacity, sizeof (ssize_t));
         list->data = (elem_t *)  calloc ((size_t) list->capacity, sizeof (elem_t));
 
-        // TODO macro
-        if (!list->prev) {
-            RETURN PREV_NULL_POINTER;
-        }
+        #define CheckForNull(expression, error) if (!(expression)) {RETURN error;}
 
-        if (!list->next) {
-            RETURN NEXT_NULL_POINTER;
-        }
+        CheckForNull (list->prev, PREV_NULL_POINTER);
+        CheckForNull (list->next, NEXT_NULL_POINTER);
+        CheckForNull (list->data, DATA_NULL_POINTER);
 
-        if (!list->data) {
-            RETURN DATA_NULL_POINTER;
-        }
+        #undef CheckForNull
 
-        // TODO are you sure it would work with other elem_t?
-        list->data [0] = NAN;
         list->prev [0] = 0;
         list->next [0] = 0;
 
@@ -71,28 +66,29 @@ namespace LinkedList {
         RETURN NO_LIST_ERRORS;
     }
 
-    ListErrorCode DestroyList_ (ist *list) {
+    ListErrorCode DestroyList_ (List *list) {
         PushLog (3);
 
         if (!list) {
             RETURN LIST_NULL_POINTER;
         }
 
-        // TODO looks like define
-        memset (list->data, 0, (size_t) list->capacity * sizeof (elem_t));
+        #define ZeroMemory(arrayPointer) memset (arrayPointer, 0, (size_t) list->capacity * sizeof (elem_t))
+
+        ZeroMemory (list->data);
+        ZeroMemory (list->prev);
+        ZeroMemory (list->next);
+
         free (list->data);
-
-        memset (list->prev, 0, (size_t) list->capacity * sizeof (size_t));
-        memset (list->next, 0, (size_t) list->capacity * sizeof (size_t));
-
         free (list->prev);
         free (list->next);
+
+        #undef ZeroMemory
 
         RETURN NO_LIST_ERRORS;
     }
 
-    // TODO unit tests
-    ListErrorCode InsertAfter_ (ist *list, ssize_t insertIndex, ssize_t *newIndex, elem_t element, allingileata callData) {
+    ListErrorCode InsertAfter_ (List *list, ssize_t insertIndex, ssize_t *newIndex, elem_t element, CallingFileData callData) {
         PushLog (3);
 
         custom_assert (newIndex, pointer_is_null, WRONG_INDEX);
@@ -124,7 +120,7 @@ namespace LinkedList {
         RETURN NO_LIST_ERRORS;
     }
 
-    ListErrorCode DeleteValue_ (ist *list, ssize_t deleteIndex, allingileata callData) {
+    ListErrorCode DeleteValue_ (List *list, ssize_t deleteIndex, CallingFileData callData) {
         PushLog (3);
 
         Verification (list, callData);
@@ -147,54 +143,46 @@ namespace LinkedList {
         RETURN NO_LIST_ERRORS;
     }
 
-    ListErrorCode VerifyList (ist *list) {
+    ListErrorCode VerifyList (List *list) {
         PushLog (3);
 
         #define WriteErrors(list, errorCodes)  (list)->errors = (ListErrorCode) ((list)->errors | (errorCodes))
         #define ReturnErrors(list, errorCodes) WriteErrors (list, errorCodes); RETURN (list)->errors
+        #define ErrorCheck(condition, errorCodes)   \
+            do {                                    \
+                if (!(condition)) {                 \
+                    WriteErrors (list, errorCodes); \
+                }                                   \
+            } while (0)
 
         if (!list) {
             RETURN LIST_NULL_POINTER;
         }
 
-        if (!list->data)
-            WriteErrors (list, DATA_NULL_POINTER);
-
-        if (!list->prev)
-            WriteErrors (list, PREV_NULL_POINTER);
-
-        if (!list->next)
-            WriteErrors (list, NEXT_NULL_POINTER);
-
-        if (list->capacity < 0)
-            WriteErrors (list, INVALID_CAPACITY);
-
-        if (list->next [0] < 0 || list->next [0] >= list->capacity)
-            WriteErrors (list, INVALID_HEAD);
-
-        if (list->prev [0] < 0 || list->prev [0] >= list->capacity)
-            WriteErrors (list, INVALID_TAIL);
-
-        if (list->freeElem < 0 || list->freeElem >= list->capacity)
-            WriteErrors (list, FREE_LIST_ERROR);
+        ErrorCheck (list->data,                                             DATA_NULL_POINTER);
+        ErrorCheck (list->prev,                                             PREV_NULL_POINTER);
+        ErrorCheck (list->next,                                             NEXT_NULL_POINTER);
+        ErrorCheck (list->capacity >= 0,                                    INVALID_CAPACITY);
+        ErrorCheck (list->next [0] >= 0 && list->next [0] < list->capacity, INVALID_HEAD);
+        ErrorCheck (list->prev [0] >= 0 && list->prev [0] < list->capacity, INVALID_TAIL);
+        ErrorCheck (list->freeElem >= 0 && list->freeElem < list->capacity, FREE_LIST_ERROR);
 
         ssize_t freeIndex = list->freeElem;
 
         while (freeIndex > 0) {
-            if (list->prev [freeIndex] > 0) {
-                WriteErrors (list, FREE_LIST_ERROR);
-            }
+            ErrorCheck (list->prev [freeIndex] <= 0, FREE_LIST_ERROR);
 
             freeIndex = list->next [freeIndex];
         }
 
-        #undef WriteErrolferergergerlmkgerkmlgfrs
+        #undef WriteErrors
         #undef ReturnErrors
+        #undef ErrorCheck
 
         RETURN list->errors;
     }
 
-    ListErrorCode FindValueInListSlowImplementation_ (ist *list, elem_t value, ssize_t *index, allingileata callData) {
+    ListErrorCode FindValueInListSlowImplementation_ (List *list, elem_t value, ssize_t *index, CallingFileData callData) {
         PushLog (3);
 
         for (ssize_t elementIndex = list->next [0]; elementIndex != 0; elementIndex = list->next [elementIndex]) {

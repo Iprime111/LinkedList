@@ -14,15 +14,15 @@
 
 namespace LinkedList {
 
-    static ListErrorCode DumpNode            (ist *list, ssize_t nodeIndex, Buffer <char> *graphvizBuffer);
-    static ListErrorCode DumpNodeConnections (ist *list, ssize_t nodeIndex, Buffer <char> *graphvizBuffer);
-    static ListErrorCode DumpConnection      (ist *list, Buffer <char> *graphvizBuffer, const char *from, const char *to, const char *color);
-    static ListErrorCode WriteDumpHeader     (ist *list, Buffer <char> *graphvizBuffer, allingileata *callData);
-    static ListErrorCode WriteCallData       (ist *list, allingileata *callData, Buffer <char> *graphvizBuffer);
+    static ListErrorCode DumpNode            (List *list, ssize_t nodeIndex, Buffer <char> *graphvizBuffer);
+    static ListErrorCode DumpNodeConnections (List *list, ssize_t nodeIndex, Buffer <char> *graphvizBuffer);
+    static ListErrorCode DumpConnection      (List *list, Buffer <char> *graphvizBuffer, const char *from, const char *to, const char *color);
+    static ListErrorCode WriteDumpHeader     (List *list, Buffer <char> *graphvizBuffer, CallingFileData *callData);
+    static ListErrorCode WriteCallData       (List *list, CallingFileData *callData, Buffer <char> *graphvizBuffer);
     static char         *GetLogFilename      (char *logFolder);
     static ListErrorCode WriteToHtml         (char *dotFilename);
 
-    #define CheckWriteErrors(buffer, data)                                                          \
+    #define WriteWithErrorCheck(buffer, data)                                                          \
                 do  {                                                                               \
                     if (WriteStringToBuffer (buffer, data) != BufferErrorCode::NO_BUFFER_ERRORS) {  \
                         DestroyBuffer (buffer);                                                     \
@@ -32,9 +32,9 @@ namespace LinkedList {
 
     #define WriteIndexToDump(dumpBuffer, indexBuffer, index)            \
                 snprintf (indexBuffer, MAX_INDEX_LENGTH, "%ld", index); \
-                CheckWriteErrors (dumpBuffer, indexBuffer)
+                WriteWithErrorCheck (dumpBuffer, indexBuffer)
 
-    ListErrorCode DumpList_ (ist *list, char *logFolder, allingileata callData) {
+    ListErrorCode DumpList_ (List *list, char *logFolder, CallingFileData callData) {
         PushLog (3);
 
         ListErrorCode verificationResult = VerifyList (list);
@@ -55,14 +55,13 @@ namespace LinkedList {
             DumpNode (list, nodeIndex, &graphvizBuffer);
         }
 
-        CheckWriteErrors (&graphvizBuffer, "\n");
+        WriteWithErrorCheck (&graphvizBuffer, "\n");
 
-        // TODO I don't like two same cycles here
         for (ssize_t nodeIndex = 0; nodeIndex < list->capacity; nodeIndex++) {
             DumpNodeConnections (list, nodeIndex, &graphvizBuffer);
         }
 
-        CheckWriteErrors (&graphvizBuffer, "}");
+        WriteWithErrorCheck (&graphvizBuffer, "}");
 
         char *filename = GetLogFilename (logFolder);
 
@@ -111,20 +110,15 @@ namespace LinkedList {
 
         fprintf (htmlFile, "This dump has been created from file %s. List graph:", dotFilename);
 
-        int byte = fgetc (imageFile);
-
-        // TODO use (f)read by chanks
         const int buf_size = 1024;
         char buffer[buf_size];
-        int read = 0;
-        while ((read = fread(buffer, buf_size, buf_size, imageFile)) == buf_size) {
-            fwrite(buffer, buf_size, buf_size, htmlFile);
+        size_t read = 0;
 
-            // fputc (byte, htmlFile);
-            // byte = fgetc (imageFile);
+        while ((read = fread (buffer, sizeof (char), buf_size, imageFile)) == buf_size) {
+            fwrite (buffer, sizeof (char), buf_size, htmlFile);
         }
 
-        fwrite(buffer, read, 1, htmlFile);
+        fwrite (buffer, read, 1, htmlFile);
 
         fclose (htmlFile);
         fclose (imageFile);
@@ -141,7 +135,7 @@ namespace LinkedList {
         return NO_LIST_ERRORS;
     }
 
-    static ListErrorCode DumpNode (ist *list, ssize_t nodeIndex, Buffer <char> *graphvizBuffer) {
+    static ListErrorCode DumpNode (List *list, ssize_t nodeIndex, Buffer <char> *graphvizBuffer) {
         PushLog (3);
 
         custom_assert (list,           pointer_is_null, LIST_NULL_POINTER);
@@ -149,36 +143,35 @@ namespace LinkedList {
 
         char indexBuffer [MAX_INDEX_LENGTH] = "";
 
-        //TODO write with errors check
-        CheckWriteErrors (graphvizBuffer, "\t");
-        WriteIndexToDump (graphvizBuffer, indexBuffer, nodeIndex);
-        CheckWriteErrors (graphvizBuffer, " [style=\"filled, rounded\" fillcolor=\"" DUMP_NODE_COLOR "\" shape=\"Mrecord\" color=\"");
+        WriteWithErrorCheck (graphvizBuffer, "\t");
+        WriteIndexToDump    (graphvizBuffer, indexBuffer, nodeIndex);
+        WriteWithErrorCheck (graphvizBuffer, " [style=\"filled, rounded\" fillcolor=\"" DUMP_NODE_COLOR "\" shape=\"Mrecord\" color=\"");
 
         if (nodeIndex) {
             if (list->prev [nodeIndex] < 0) {
-                CheckWriteErrors (graphvizBuffer, DUMP_FREE_NODE_OUTLINE_COLOR);
+                WriteWithErrorCheck (graphvizBuffer, DUMP_FREE_NODE_OUTLINE_COLOR);
             } else {
-                CheckWriteErrors (graphvizBuffer, DUMP_NODE_OUTLINE_COLOR);
+                WriteWithErrorCheck (graphvizBuffer, DUMP_NODE_OUTLINE_COLOR);
             }
         } else {
-            CheckWriteErrors (graphvizBuffer, DUMP_HEADER_NODE_COLOR);
+            WriteWithErrorCheck (graphvizBuffer, DUMP_HEADER_NODE_COLOR);
         }
 
-        CheckWriteErrors (graphvizBuffer, "\" label=\"");
+        WriteWithErrorCheck (graphvizBuffer, "\" label=\"");
 
         char nodeDataBuffer [MAX_NODE_DATA_LENGTH] = "";
 
         snprintf (nodeDataBuffer, MAX_NODE_DATA_LENGTH, "<prev> prev: %ld | {<index> index: %ld | <data> data: %lf} | <next> next: %ld\"",
                     list->prev [nodeIndex], nodeIndex, list->data [nodeIndex], list->next [nodeIndex]);
 
-        CheckWriteErrors (graphvizBuffer, nodeDataBuffer);
+        WriteWithErrorCheck (graphvizBuffer, nodeDataBuffer);
 
-        CheckWriteErrors (graphvizBuffer, "];\n");
+        WriteWithErrorCheck (graphvizBuffer, "];\n");
 
         RETURN NO_LIST_ERRORS;
     }
 
-    static ListErrorCode DumpNodeConnections (ist *list, ssize_t nodeIndex, Buffer <char> *graphvizBuffer) {
+    static ListErrorCode DumpNodeConnections (List *list, ssize_t nodeIndex, Buffer <char> *graphvizBuffer) {
         PushLog (3);
 
         custom_assert (list,           pointer_is_null, LIST_NULL_POINTER);
@@ -214,26 +207,26 @@ namespace LinkedList {
         RETURN NO_LIST_ERRORS;
     }
 
-    static ListErrorCode DumpConnection (ist *list, Buffer <char> *graphvizBuffer, const char *from, const char *to, const char *color) {
+    static ListErrorCode DumpConnection (List *list, Buffer <char> *graphvizBuffer, const char *from, const char *to, const char *color) {
         PushLog (3);
 
-        CheckWriteErrors (graphvizBuffer, "\t");
-        CheckWriteErrors (graphvizBuffer, from);
-        CheckWriteErrors (graphvizBuffer, "->");
-        CheckWriteErrors (graphvizBuffer, to);
-        CheckWriteErrors (graphvizBuffer, " [color=\"");
-        CheckWriteErrors (graphvizBuffer, color);
-        CheckWriteErrors (graphvizBuffer, "\"];\n");
+        WriteWithErrorCheck (graphvizBuffer, "\t");
+        WriteWithErrorCheck (graphvizBuffer, from);
+        WriteWithErrorCheck (graphvizBuffer, "->");
+        WriteWithErrorCheck (graphvizBuffer, to);
+        WriteWithErrorCheck (graphvizBuffer, " [color=\"");
+        WriteWithErrorCheck (graphvizBuffer, color);
+        WriteWithErrorCheck (graphvizBuffer, "\"];\n");
 
         RETURN NO_LIST_ERRORS;
     }
 
-    static ListErrorCode WriteDumpHeader (ist *list, Buffer <char> *graphvizBuffer, allingileata *callData) {
+    static ListErrorCode WriteDumpHeader (List *list, Buffer <char> *graphvizBuffer, CallingFileData *callData) {
         PushLog (4);
 
         custom_assert (graphvizBuffer, pointer_is_null, GRAPHVIZ_BUFFER_ERROR);
 
-        CheckWriteErrors (graphvizBuffer, "digraph {\n\tbgcolor=\"" DUMP_BACKGROUND_COLOR "\";\n\tsplines=ortho\n\t");
+        WriteWithErrorCheck (graphvizBuffer, "digraph {\n\tbgcolor=\"" DUMP_BACKGROUND_COLOR "\";\n\tsplines=ortho\n\t");
 
         WriteCallData (list, callData, graphvizBuffer);
 
@@ -241,77 +234,75 @@ namespace LinkedList {
 
         // TODO separate function
         for (ssize_t nodeIndex = list->next [0]; nodeIndex > 0 && nodeIndex < list->capacity; nodeIndex = list->next [nodeIndex]) {
-            WriteIndexToDump (graphvizBuffer, indexBuffer, nodeIndex);
-
-            CheckWriteErrors (graphvizBuffer, " -> ");
+            WriteIndexToDump    (graphvizBuffer, indexBuffer, nodeIndex);
+            WriteWithErrorCheck (graphvizBuffer, " -> ");
         }
 
-        CheckWriteErrors (graphvizBuffer, " 0 -> ");
+        WriteWithErrorCheck (graphvizBuffer, " 0 -> ");
 
         for (ssize_t nodeIndex = list->freeElem; nodeIndex > 0 && nodeIndex < list->capacity; nodeIndex = list->next [nodeIndex]) {
-            WriteIndexToDump (graphvizBuffer, indexBuffer, nodeIndex);
-
-            CheckWriteErrors (graphvizBuffer, " -> ");
+            WriteIndexToDump    (graphvizBuffer, indexBuffer, nodeIndex);
+            WriteWithErrorCheck (graphvizBuffer, " -> ");
         }
 
-        WriteIndexToDump (graphvizBuffer, indexBuffer, list->prev [0]);
-        CheckWriteErrors (graphvizBuffer, " [weight=999999 color=\"" DUMP_BACKGROUND_COLOR "\"; style=invis];\n");
+        WriteIndexToDump    (graphvizBuffer, indexBuffer, list->prev [0]);
+        WriteWithErrorCheck (graphvizBuffer, " [weight=999999 color=\"" DUMP_BACKGROUND_COLOR "\"; style=invis];\n");
 
-        CheckWriteErrors (graphvizBuffer, "\t{rank=same; ");
+        WriteWithErrorCheck (graphvizBuffer, "\t{rank=same; ");
 
         for (ssize_t nodeIndex = 0; nodeIndex < list->capacity; nodeIndex++) {
-            WriteIndexToDump (graphvizBuffer, indexBuffer, nodeIndex);
-            CheckWriteErrors (graphvizBuffer, " ");
+            WriteIndexToDump    (graphvizBuffer, indexBuffer, nodeIndex);
+            WriteWithErrorCheck (graphvizBuffer, " ");
         }
 
-        CheckWriteErrors (graphvizBuffer, "}\n");
+        WriteWithErrorCheck (graphvizBuffer, "}\n");
 
         // TODO looks like lots of copy-pase
         const char *HeaderFieldStyle = "[style=\"filled, rounded\" fillcolor=\"" DUMP_NODE_COLOR"\" shape=\"rectangle\" color = \"" DUMP_HEADER_NODE_COLOR "\"];\n";
 
-        CheckWriteErrors (graphvizBuffer, "\tHead");
-        CheckWriteErrors (graphvizBuffer, HeaderFieldStyle);
+        WriteWithErrorCheck (graphvizBuffer, "\tHead");
+        WriteWithErrorCheck (graphvizBuffer, HeaderFieldStyle);
 
-        CheckWriteErrors (graphvizBuffer, "\tTail");
-        CheckWriteErrors (graphvizBuffer, HeaderFieldStyle);
+        WriteWithErrorCheck (graphvizBuffer, "\tTail");
+        WriteWithErrorCheck (graphvizBuffer, HeaderFieldStyle);
 
-        CheckWriteErrors (graphvizBuffer, "\tFree");
-        CheckWriteErrors (graphvizBuffer, HeaderFieldStyle);
+        WriteWithErrorCheck (graphvizBuffer, "\tFree");
+        WriteWithErrorCheck (graphvizBuffer, HeaderFieldStyle);
 
         const char *HeaderConnectionStyle = "[color=\"" DUMP_HEADER_NODE_COLOR "\"];\n";
 
-        CheckWriteErrors (graphvizBuffer, "\tHead -> ");
-        WriteIndexToDump (graphvizBuffer, indexBuffer, list->next [0]);
-        CheckWriteErrors (graphvizBuffer, HeaderConnectionStyle);
+        WriteWithErrorCheck (graphvizBuffer, "\tHead -> ");
+        WriteIndexToDump    (graphvizBuffer, indexBuffer, list->next [0]);
+        WriteWithErrorCheck (graphvizBuffer, HeaderConnectionStyle);
 
 
-        CheckWriteErrors (graphvizBuffer, "\tTail -> ");
-        WriteIndexToDump (graphvizBuffer, indexBuffer, list->prev [0]);
-        CheckWriteErrors (graphvizBuffer, HeaderConnectionStyle);
+        WriteWithErrorCheck (graphvizBuffer, "\tTail -> ");
+        WriteIndexToDump    (graphvizBuffer, indexBuffer, list->prev [0]);
+        WriteWithErrorCheck (graphvizBuffer, HeaderConnectionStyle);
 
-        CheckWriteErrors (graphvizBuffer, "\tFree -> ");
-        WriteIndexToDump (graphvizBuffer, indexBuffer, list->freeElem);
-        CheckWriteErrors (graphvizBuffer, HeaderConnectionStyle);
+        WriteWithErrorCheck (graphvizBuffer, "\tFree -> ");
+        WriteIndexToDump    (graphvizBuffer, indexBuffer, list->freeElem);
+        WriteWithErrorCheck (graphvizBuffer, HeaderConnectionStyle);
 
         RETURN NO_LIST_ERRORS;
     }
 
-    static ListErrorCode WriteCallData (ist *list, allingileata *callData, Buffer <char> *graphvizBuffer) {
+    static ListErrorCode WriteCallData (List *list, CallingFileData *callData, Buffer <char> *graphvizBuffer) {
         PushLog (4);
 
         char callDataBuffer [FILENAME_MAX] = "";
 
-        CheckWriteErrors (graphvizBuffer, "\tCreation [shape=rectangle style=filled fillcolor=\"" DUMP_NODE_COLOR "\" rank=max label=\"Was created in ");
+        WriteWithErrorCheck (graphvizBuffer, "\tCreation [shape=rectangle style=filled fillcolor=\"" DUMP_NODE_COLOR "\" rank=max label=\"Was created in ");
         snprintf (callDataBuffer, FILENAME_MAX, "%s (%s:%d)",
                     list->creationData.function, list->creationData.file, list->creationData.line);
-        CheckWriteErrors (graphvizBuffer, callDataBuffer);
-        CheckWriteErrors (graphvizBuffer, "\"]\n");
+        WriteWithErrorCheck (graphvizBuffer, callDataBuffer);
+        WriteWithErrorCheck (graphvizBuffer, "\"]\n");
 
-        CheckWriteErrors (graphvizBuffer, "\tCall [shape=rectangle style=filled fillcolor=\"" DUMP_NODE_COLOR "\" rank=max label=\"Was called in ");
+        WriteWithErrorCheck (graphvizBuffer, "\tCall [shape=rectangle style=filled fillcolor=\"" DUMP_NODE_COLOR "\" rank=max label=\"Was called in ");
         snprintf (callDataBuffer, FILENAME_MAX, "%s (%s:%d)",
                     callData->function, callData->file, callData->line);
-        CheckWriteErrors (graphvizBuffer, callDataBuffer);
-        CheckWriteErrors (graphvizBuffer, "\"]\n");
+        WriteWithErrorCheck (graphvizBuffer, callDataBuffer);
+        WriteWithErrorCheck (graphvizBuffer, "\"]\n");
 
         RETURN NO_LIST_ERRORS;
     }
